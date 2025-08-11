@@ -1,1 +1,70 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Chats</h2>
+                <button class="new-chat-btn">
+                    <span class="material-symbols-outlined">add</span>
+                    New Chat
+                </button>
+            </div>
+            <div class="chat-history">
+                <ul>
+                    <li class="chat-item active">
+                        <span class="material-symbols-outlined">chat_bubble</span>
+                        <p>General Conversation</p>
+                    </li>
+                    <li class="chat-item">
+                        <span class="material-symbols-outlined">code</span>
+                        <p>Code Help</p>
+                    </li>
+                    <li class="chat-item">
+                        <span class="material-symbols-outlined">lightbulb</span>
+                        <p>Brainstorming</p>
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    <p>User</p>
+                </div>
+                <button class="settings-btn">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+        </div>
+        <div class="chat-window">
+            <div class="chat-header">
+                <h3>General Conversation</h3>
+            </div>
+            <div class="chat-messages">
+                <div class="message-container">
+                    <div class="message ai-message">
+                        <p>Hello! How can I assist you today?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea id="userInput" placeholder="Type your message here..."></textarea>
+                    <button id="sendMessageBtn">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+                <p class="disclaimer">This is a test environment. Do not share sensitive information.</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
