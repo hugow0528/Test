@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure AI Chat Platform</title>
+    <!-- Fixes the 404 favicon error in the console -->
     <link rel="icon" href="data:,">
     <style>
         :root {
@@ -20,24 +21,21 @@
             --send-btn-color: #ffffff;
             --border-color: #e0e0e0;
         }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
         body {
-            background-color: var(--header-bg); /* Darker background for the whole page */
+            background-color: var(--body-bg);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            color: var(--text-color);
         }
         .chat-container {
             width: 100%;
-            height: 100%;
-            height: 100dvh; /* Dynamic viewport height for mobile */
             max-width: 800px;
+            height: 95vh;
+            max-height: 900px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -52,7 +50,21 @@
             text-align: center;
             font-size: 1.2rem;
             font-weight: 600;
-            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--header-bg);
         }
         .chat-box {
             flex-grow: 1;
@@ -62,65 +74,108 @@
             flex-direction: column;
             gap: 15px;
         }
-        .message { display: flex; align-items: flex-end; max-width: 85%; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .message .icon { width: 30px; height: 30px; border-radius: 50%; background-color: var(--send-btn-bg); color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; flex-shrink: 0; }
-        .message .text { padding: 12px 18px; border-radius: 18px; line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; word-wrap: break-word; }
+        .message {
+            display: flex;
+            align-items: flex-end;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--send-btn-bg);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .message .text {
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+        }
         .message.user { align-self: flex-end; flex-direction: row-reverse; }
         .message.user .text { background-color: var(--user-msg-bg); margin-left: 10px; border-bottom-right-radius: 4px; }
         .message.ai { align-self: flex-start; }
         .message.ai .icon { background-color: var(--header-bg); }
         .message.ai .text { background-color: var(--ai-msg-bg); margin-right: 10px; border-bottom-left-radius: 4px; }
         .message.error .text { background-color: var(--error-msg-bg); color: #c62828; }
-        .chat-input {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid var(--border-color);
-            background-color: #f0f0f0;
-            flex-shrink: 0;
-            /* CRITICAL: Pushes the input area up from the device home bar */
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        .message.typing { color: #aaa; font-style: italic; }
+        .message.typing .icon { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .chat-input { display: flex; padding: 15px; border-top: 1px solid var(--border-color); background-color: #f0f0f0; }
+        .chat-input input {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
         }
-        .chat-input input[type="file"] { display: none; }
-        .chat-input input[type="text"] { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 25px; padding: 12px 20px; font-size: 1rem; outline: none; }
-        .chat-input button { background-color: var(--send-btn-bg); color: var(--send-btn-color); border: none; border-radius: 50%; width: 50px; height: 50px; margin-left: 10px; cursor: pointer; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; transition: background-color 0.3s; flex-shrink: 0; }
-        .chat-input button#upload-btn { background-color: #e0e0e0; color: #333; margin-left: 0; margin-right: 10px; }
+        .chat-input input:focus { border-color: var(--send-btn-bg); }
+        .chat-input button {
+            background-color: var(--send-btn-bg);
+            color: var(--send-btn-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        .chat-input button:hover { background-color: #106a5f; }
+        @media (max-width: 600px) {
+            .chat-container { height: 100vh; max-height: 100vh; border-radius: 0; }
+        }
     </style>
 </head>
 <body>
+
     <div class="chat-container">
-        <div class="chat-header">Gemini Assistant</div>
+        <div class="chat-header">
+            <div class="avatar">AI</div>
+            <span>Gemini Assistant</span>
+        </div>
         <div class="chat-box" id="chat-box">
-            <div class="message ai"><div class="icon">AI</div><div class="text">Hello! I'm your secure AI Assistant. How can I help you today?</div></div>
+            <div class="message ai">
+                <div class="icon">AI</div>
+                <div class="text">Hello! I'm your secure AI Assistant. How can I help you today?</div>
+            </div>
         </div>
         <div class="chat-input">
-            <input type="file" id="image-input" accept="image/jpeg, image/png">
-            <button id="upload-btn" aria-label="Upload Image">🖼️</button>
-            <input type="text" id="user-input" placeholder="Type message or upload image...">
+            <input type="text" id="user-input" placeholder="Type your message here...">
             <button id="send-btn" aria-label="Send Message">➔</button>
         </div>
     </div>
+
     <script>
-        // DOM Elements
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
-        const uploadBtn = document.getElementById('upload-btn');
-        const imageInput = document.getElementById('image-input');
-        
-        // API Endpoints
         const CHAT_PROXY_URL = '/api/chat';
-        const RECOGNIZE_PROXY_URL = '/api/recognize';
 
-        // --- Core Chat Logic ---
-        const handleTextChat = async () => {
+        const sendMessage = async () => {
             const messageText = userInput.value.trim();
             if (!messageText) return;
 
             displayMessage(messageText, 'user');
             userInput.value = "";
-
-            const aiMessageElement = createStreamableMessageElement();
+            const typingIndicator = displayTypingIndicator();
 
             try {
                 const response = await fetch(CHAT_PROXY_URL, {
@@ -129,99 +184,81 @@
                     body: JSON.stringify({ message: messageText })
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                    // If the server returned an error (like 400 or 500), use its message
+                    throw new Error(data.error || `Server responded with status: ${response.status}`);
                 }
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let fullResponse = "";
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    fullResponse += decoder.decode(value, { stream: true });
-                    aiMessageElement.textContent = fullResponse + " ▌"; // Add typing cursor
+                // Check for a valid response from the Gemini API
+                const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (aiResponseText) {
+                    displayMessage(aiResponseText, 'ai');
+                } else {
+                    // Handle cases where the API call was successful but the content is blocked
+                    const blockReason = data.promptFeedback?.blockReason || "an unknown reason";
+                    const errorMessage = `I am unable to provide a response. This may be due to safety settings. (Reason: ${blockReason})`;
+                    displayMessage(errorMessage, 'ai', true);
                 }
-                aiMessageElement.textContent = fullResponse; // Final text
 
             } catch (error) {
-                console.error("Chat Error:", error);
-                aiMessageElement.textContent = `An error occurred: ${error.message}`;
-                aiMessageElement.parentElement.classList.add('error');
+                console.error("Frontend Error:", error);
+                const userFriendlyError = `An error occurred. Please try again. (Details: ${error.message})`;
+                displayMessage(userFriendlyError, 'ai', true);
+            } finally {
+                // Ensure the typing indicator is always removed
+                if (typingIndicator.parentNode) {
+                    chatBox.removeChild(typingIndicator);
+                }
             }
         };
 
-        // --- Image Recognition Logic ---
-        const handleImageUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            displayMessage(`Uploading "${file.name}"...`, 'user');
-            const thinkingMessage = displayMessage('Analyzing image...', 'ai');
-
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                try {
-                    const response = await fetch(RECOGNIZE_PROXY_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageBase64: reader.result })
-                    });
-                    
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || `Server error: ${response.status}`);
-                    }
-                    
-                    thinkingMessage.textContent = data.text; // Update with recognized text
-                } catch (error) {
-                    console.error("Image Recognition Error:", error);
-                    thinkingMessage.textContent = `Failed to process image: ${error.message}`;
-                    thinkingMessage.parentElement.classList.add('error');
-                } finally {
-                    imageInput.value = ''; // Reset for next upload
-                }
-            };
-            reader.onerror = () => {
-                thinkingMessage.textContent = 'Error reading the image file.';
-                thinkingMessage.parentElement.classList.add('error');
-            };
-        };
-
-        // --- UI Helper Functions ---
         const displayMessage = (text, sender, isError = false) => {
-            const messageWrapper = document.createElement('div');
-            messageWrapper.classList.add('message', sender);
-            if(isError) messageWrapper.classList.add('error');
-            
-            const icon = document.createElement('div');
-            icon.className = 'icon';
-            icon.textContent = sender === 'user' ? 'You' : 'AI';
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            if (isError) {
+                messageElement.classList.add('error');
+            }
 
-            const textElem = document.createElement('div');
-            textElem.className = 'text';
-            textElem.textContent = text;
-            
-            messageWrapper.append(icon, textElem);
-            chatBox.appendChild(messageWrapper);
+            const iconElement = document.createElement('div');
+            iconElement.classList.add('icon');
+            iconElement.textContent = sender === 'user' ? 'You' : 'AI';
+
+            const textElement = document.createElement('div');
+            textElement.classList.add('text');
+            textElement.textContent = text;
+
+            messageElement.appendChild(iconElement);
+            messageElement.appendChild(textElement);
+
+            chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
-            return textElem; // Return the text element for updates
         };
 
-        const createStreamableMessageElement = () => {
-            return displayMessage("▌", 'ai'); // Start with just a cursor
+        const displayTypingIndicator = () => {
+            const typingElement = document.createElement('div');
+            typingElement.classList.add('message', 'ai', 'typing');
+            const iconElement = document.createElement('div');
+            iconElement.classList.add('icon');
+            iconElement.textContent = 'AI';
+            const textElement = document.createElement('div');
+            textElement.classList.add('text');
+            textElement.textContent = 'AI is thinking...';
+            typingElement.appendChild(iconElement);
+            typingElement.appendChild(textElement);
+            chatBox.appendChild(typingElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return typingElement;
         };
 
-        // --- Event Listeners ---
-        sendBtn.addEventListener('click', handleTextChat);
-        userInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleTextChat());
-        uploadBtn.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', handleImageUpload);
-
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
+
 </body>
 </html>
