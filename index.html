@@ -1,182 +1,295 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>AI Assistant</title>
-    <link rel="icon" href="data:,">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Pro</title>
+
+    <!-- 引入外部資源 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- 用於解析 Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script> <!-- 用於過濾 HTML，防止 XSS 攻擊 -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script> <!-- 用於提供高質素圖標 -->
+
     <style>
+        /* --- 1. 設計系統：顏色、字體、間距 (基於你嘅 UI 指南) --- */
         :root {
-            --body-bg: #f5f5f5;
-            --chat-bg: #ffffff;
-            --user-msg-bg: #dcf8c6;
-            --ai-msg-bg: #f1f0f0;
-            --error-msg-bg: #ffebee;
-            --text-color: #333;
-            --header-bg: #075e54;
-            --header-text-color: #ffffff;
-            --input-bg: #ffffff;
-            --send-btn-bg: #128c7e;
-            --send-btn-color: #ffffff;
-            --border-color: #e0e0e0;
+            --primary-color: #007AFF; /* 主題色 (Apple Blue) */
+            --primary-color-light: #e5f2ff;
+            --background-color: #f4f7f9; /* 背景色，更柔和 */
+            --surface-color: #ffffff;    /* 組件表面顏色，例如卡片 */
+            --text-primary: #1d1d1f;      /* 主要文字顏色 (接近黑色) */
+            --text-secondary: #6e6e73;    /* 次要文字顏色 (灰色) */
+            --border-color: #e1e4e8;      /* 邊框顏色 */
+            --error-color: #d7263d;
+            --error-background: #ffebee;
+
+            --user-message-bg: var(--primary-color);
+            --user-message-text: #ffffff;
+            --ai-message-bg: #e9eaec;
+            --ai-message-text: var(--text-primary);
+
+            --header-height: 70px;
+            --input-area-height: 80px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 20px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
         }
 
-        /* --- MOBILE RESPONSIVE IMPROVEMENT --- */
-        /* Prevents scrolling issues on the main page */
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            position: relative;
+        /* --- 2. 基礎同佈局設計 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            background-color: var(--body-bg);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .chat-container {
             width: 100%;
-            max-width: 800px;
-            /* --- MOBILE RESPONSIVE IMPROVEMENT --- */
-            /* Use 100% height to fill the parent (body) */
+            max-width: 800px; /* 限制最大寬度以提高可讀性 */
             height: 100%;
-            max-height: 900px;
+            max-height: 95vh;
+            background: var(--surface-color);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border-radius: 12px;
             overflow: hidden;
-            background: var(--chat-bg);
-
-            /* --- MOBILE RESPONSIVE IMPROVEMENT --- */
-            /* Adds padding at the bottom to avoid OS navigation bars (e.g., iPhone home bar) */
-            padding-bottom: env(safe-area-inset-bottom);
         }
 
+        /* --- 3. 組件設計 (Header, Chat Box, Message Bubbles) --- */
         .chat-header {
-            background-color: var(--header-bg);
-            color: var(--header-text-color);
-            padding: 1.2rem;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 600;
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0; /* Prevents header from shrinking */
+            padding: 0 var(--spacing-lg);
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+
         .chat-header .avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background-color: #fff;
-            margin-right: 15px;
+            background-color: var(--primary-color);
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-weight: bold;
-            color: var(--header-bg);
+            justify-content: center;
+            margin-right: var(--spacing-md);
         }
+
+        .chat-header .avatar i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .chat-header .info h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .chat-header .info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
         .chat-box {
-            flex-grow: 1; /* This is key for the chat area to fill available space */
-            padding: 20px;
+            flex-grow: 1;
+            padding: var(--spacing-lg);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: var(--spacing-lg);
         }
+
         .message {
             display: flex;
-            align-items: flex-end;
+            align-items: flex-start;
+            gap: var(--spacing-md);
             max-width: 85%;
-            animation: fadeIn 0.3s ease-in-out;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .message .icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: var(--send-btn-bg);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        .message .text {
-            padding: 12px 18px;
-            border-radius: 18px;
-            line-height: 1.6;
-            font-size: 0.95rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .message.user { align-self: flex-end; flex-direction: row-reverse; }
-        .message.user .text { background-color: var(--user-msg-bg); margin-left: 10px; border-bottom-right-radius: 4px; }
-        .message.ai { align-self: flex-start; }
-        .message.ai .icon { background-color: var(--header-bg); }
-        .message.ai .text { background-color: var(--ai-msg-bg); margin-right: 10px; border-bottom-left-radius: 4px; }
-        .message.error .text { background-color: var(--error-msg-bg); color: #c62828; }
-        .message.typing { color: #aaa; font-style: italic; }
-        .message.typing .icon { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        
-        .chat-input {
-            display: flex;
-            padding: 15px;
-            border-top: 1px solid var(--border-color);
-            background-color: #f0f0f0;
-            flex-shrink: 0; /* Prevents input area from shrinking */
-        }
-        .chat-input input[type="text"] {
-            flex-grow: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 25px;
-            padding: 12px 20px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .chat-input input[type="text"]:focus { border-color: var(--send-btn-bg); }
-        .chat-input button {
-            background-color: var(--send-btn-bg);
-            color: var(--send-btn-color);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            margin-left: 10px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.3s;
-        }
-        .chat-input button:hover { background-color: #106a5f; }
-        
-        .chat-input button#upload-btn {
-            background-color: #f0f0f0;
-            color: #075e54;
-            margin-right: 10px;
-            margin-left: 0;
-        }
-        .chat-input button#upload-btn:hover { background-color: #e0e0e0; }
 
-        /* --- MOBILE RESPONSIVE IMPROVEMENT --- */
-        /* On small screens, use the dynamic viewport height and remove border radius */
-        @media (max-width: 600px) {
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--ai-message-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+        
+        .message.user .avatar {
+            background: var(--user-message-bg);
+            color: var(--user-message-text);
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .message-text {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-lg);
+            line-height: 1.6;
+        }
+        
+        .message.user .message-text {
+            background: var(--user-message-bg);
+            color: var(--user-message-text);
+            border-top-right-radius: var(--spacing-xs);
+        }
+
+        .message.ai .message-text {
+            background: var(--ai-message-bg);
+            color: var(--ai-message-text);
+            border-top-left-radius: var(--spacing-xs);
+        }
+
+        .message.error .message-text {
+            background-color: var(--error-background);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        .message-actions {
+            display: none; /* 預設隱藏 */
+            align-self: flex-end;
+            margin-top: var(--spacing-sm);
+        }
+
+        .message.ai:hover .message-actions {
+            display: block; /* 滑鼠移過 AI 訊息時顯示 */
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--ai-message-bg);
+            color: var(--text-primary);
+        }
+
+        .action-btn i {
+            font-size: 20px;
+        }
+        
+        /* --- 4. Markdown 格式渲染樣式 --- */
+        .message-text h1, .message-text h2, .message-text h3 { margin: 16px 0 8px; font-weight: 600; }
+        .message-text p { margin-bottom: 8px; }
+        .message-text ul, .message-text ol { margin: 0 0 8px 24px; }
+        .message-text li { margin-bottom: 4px; }
+        .message-text code {
+            font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .message.user .message-text code { background: rgba(255,255,255,0.2); }
+        .message-text pre {
+            background-color: #2d2d2d;
+            color: #f1f1f1;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 8px;
+            overflow-x: auto;
+        }
+        .message-text pre code { background: none; padding: 0; }
+
+        /* --- 5. 輸入區域設計 --- */
+        .chat-input-area {
+            flex-shrink: 0;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+            background: var(--surface-color);
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background-color: var(--background-color);
+            border-radius: var(--border-radius-lg);
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .chat-input-wrapper:focus-within {
+             box-shadow: 0 0 0 2px var(--primary-color-light);
+        }
+
+        #user-input {
+            flex-grow: 1;
+            border: none;
+            background: none;
+            padding: var(--spacing-md);
+            font-size: 16px;
+            outline: none;
+            color: var(--text-primary);
+        }
+        
+        .input-btn {
+            background: none;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+        
+        .input-btn i { font-size: 24px; }
+        .input-btn:hover { background-color: var(--primary-color-light); color: var(--primary-color); }
+
+        #send-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        #send-btn:hover { background-color: #0062cc; }
+
+        /* 隱藏原生檔案上傳 input */
+        #file-input { display: none; }
+        
+        /* --- 6. 響應式設計 (Responsive Design) --- */
+        @media (max-width: 800px) {
             .chat-container {
-                height: 100dvh; /* Dynamic Viewport Height: adjusts for keyboard/toolbars */
-                max-height: 100dvh;
+                height: 100vh;
+                max-height: 100vh;
                 border-radius: 0;
             }
         }
@@ -185,37 +298,56 @@
 <body>
 
     <div class="chat-container">
-        <div class="chat-header">
-            <div class="avatar">AI</div>
-            <span>AI Assistant</span>
-        </div>
-        <div class="chat-box" id="chat-box">
-            <div class="message ai">
-                <div class="icon">AI</div>
-                <div class="text">Hello! I'm your secure AI Assistant. You can send me text or upload an image to recognize text.</div>
+        <header class="chat-header">
+            <div class="avatar"><i class="ph-fill ph-sparkle"></i></div>
+            <div class="info">
+                <h1>AI Assistant Pro</h1>
+                <p>Online</p>
             </div>
-        </div>
-        <div class="chat-input">
-            <input type="file" id="image-input" accept="image/jpeg, image/png" style="display: none;">
-            <button id="upload-btn" aria-label="Upload Image">🖼️</button>
-            <input type="text" id="user-input" placeholder="Type message or upload image...">
-            <button id="send-btn" aria-label="Send Message">➔</button>
-        </div>
+        </header>
+
+        <main class="chat-box" id="chat-box">
+            <!-- 初始歡迎訊息 -->
+            <div class="message ai">
+                <div class="avatar"><i class="ph-bold ph-robot"></i></div>
+                <div class="message-content">
+                    <div class="message-text">你好！我係你嘅 AI 助手。你可以問我問題、叫我總結文章，或者上傳圖片畀我分析。</div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <input type="file" id="file-input" accept="image/*">
+                <button class="input-btn" id="upload-btn" aria-label="Upload file" title="Upload file">
+                    <i class="ph-bold ph-paperclip"></i>
+                </button>
+                <input type="text" id="user-input" placeholder="輸入訊息...">
+                <button class="input-btn" id="send-btn" aria-label="Send message" title="Send message">
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+            </div>
+        </footer>
     </div>
 
     <script>
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        
         const CHAT_PROXY_URL = '/api/chat';
+        const RECOGNIZE_PROXY_URL = '/api/recognize';
 
+        // --- 主要功能：發送文字訊息 ---
         const sendMessage = async () => {
             const messageText = userInput.value.trim();
             if (!messageText) return;
-
+            
             displayMessage(messageText, 'user');
             userInput.value = "";
-            const typingIndicator = displayTypingIndicator();
+            displayTypingIndicator();
 
             try {
                 const response = await fetch(CHAT_PROXY_URL, {
@@ -223,118 +355,159 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: messageText })
                 });
+                
+                removeTypingIndicator();
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error || `Server responded with status: ${response.status}`);
+
+                if (!response.ok) throw new Error(data.error || `Server Error: ${response.status}`);
                 
                 const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (aiResponseText) {
                     displayMessage(aiResponseText, 'ai');
                 } else {
-                    const blockReason = data.promptFeedback?.blockReason || "an unknown reason";
-                    displayMessage(`I am unable to provide a response. (Reason: ${blockReason})`, 'ai', true);
+                    handleBlockedResponse(data);
                 }
             } catch (error) {
-                console.error("Frontend Text Error:", error);
-                displayMessage(`An error occurred. Please try again. (Details: ${error.message})`, 'ai', true);
-            } finally {
-                if (typingIndicator.parentNode) chatBox.removeChild(typingIndicator);
+                handleError(error);
             }
         };
 
-        const displayMessage = (text, sender, isError = false) => {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', sender);
-            if (isError) messageElement.classList.add('error');
-
-            const iconElement = document.createElement('div');
-            iconElement.classList.add('icon');
-            iconElement.textContent = sender === 'user' ? 'You' : 'AI';
-
-            const textElement = document.createElement('div');
-            textElement.classList.add('text');
-            textElement.textContent = text;
-
-            messageElement.appendChild(iconElement);
-            messageElement.appendChild(textElement);
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        };
-
-        const displayTypingIndicator = () => {
-            const typingElement = document.createElement('div');
-            typingElement.classList.add('message', 'ai', 'typing');
-            const iconElement = document.createElement('div');
-            iconElement.classList.add('icon');
-            iconElement.textContent = 'AI';
-            const textElement = document.createElement('div');
-            textElement.classList.add('text');
-            textElement.textContent = 'AI is thinking...';
-            typingElement.appendChild(iconElement);
-            typingElement.appendChild(textElement);
-            chatBox.appendChild(typingElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return typingElement;
-        };
-
-        const uploadBtn = document.getElementById('upload-btn');
-        const imageInput = document.getElementById('image-input');
-        const RECOGNIZE_PROXY_URL = '/api/recognize';
-
-        uploadBtn.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', async (event) => {
+        // --- 新功能：處理檔案上傳 ---
+        const handleFileUpload = (event) => {
             const file = event.target.files[0];
             if (!file) return;
 
-            displayMessage(`You've uploaded: "${file.name}"`, 'user');
-            const typingIndicator = displayTypingIndicator();
+            displayMessage(`你已上傳檔案： "${file.name}"`, 'user');
+            displayTypingIndicator();
+            
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
-                const imageBase64 = reader.result;
                 try {
                     const response = await fetch(RECOGNIZE_PROXY_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageBase64: imageBase64 })
+                        body: JSON.stringify({ imageBase64: reader.result })
                     });
-                    
-                    // --- IMPROVED ERROR HANDLING FOR JSON PARSING ---
-                    // Check if the response is actually JSON before trying to parse it
-                    const contentType = response.headers.get("content-type");
-                    if (!contentType || !contentType.includes("application/json")) {
-                        const responseText = await response.text(); // Get the raw text (likely HTML error page)
-                        throw new Error(`Expected JSON response, but got ${contentType}. Server response: ${responseText.substring(0, 100)}...`);
-                    }
 
+                    removeTypingIndicator();
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || `Server responded with status: ${response.status}`);
+
+                    if (!response.ok) throw new Error(data.error || `Server Error: ${response.status}`);
                     
                     const recognizedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (recognizedText) {
-                        displayMessage(`Recognized Text:\n\n${recognizedText}`, 'ai');
+                        displayMessage(recognizedText, 'ai');
                     } else {
-                        const blockReason = data.promptFeedback?.blockReason || "an unknown reason";
-                        displayMessage(`Could not recognize text. (Reason: ${blockReason})`, 'ai', true);
+                        handleBlockedResponse(data);
                     }
                 } catch (error) {
-                    console.error("Image Recognition Error:", error);
-                    displayMessage(`Error: ${error.message}`, 'ai', true);
+                    handleError(error);
                 } finally {
-                    if (typingIndicator.parentNode) chatBox.removeChild(typingIndicator);
-                    imageInput.value = '';
+                    fileInput.value = ''; // 重置 input，方便下次上傳相同檔案
                 }
             };
-            reader.onerror = (error) => {
-                console.error("File Reader Error:", error);
-                displayMessage('Failed to read the selected file.', 'ai', true);
-            };
-        });
+             reader.onerror = () => handleError(new Error('無法讀取檔案。'));
+        };
 
+        // --- UI 顯示邏輯 ---
+        const displayMessage = (text, sender, isError = false) => {
+            const messageId = `msg-${Date.now()}`;
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            if (isError) messageDiv.classList.add('error');
+            
+            const avatarContent = sender === 'user' ? '你' : '<i class="ph-bold ph-robot"></i>';
+            const copyButton = sender === 'ai' && !isError
+                ? `<div class="message-actions">
+                       <button class="action-btn copy-btn" title="複製內容" onclick="copyToClipboard('${messageId}')">
+                           <i class="ph ph-copy"></i>
+                       </button>
+                   </div>`
+                : '';
+
+            messageDiv.innerHTML = `
+                <div class="avatar">${avatarContent}</div>
+                <div class="message-content">
+                    <div class="message-text" id="${messageId}"></div>
+                    ${copyButton}
+                </div>
+            `;
+
+            const textElement = messageDiv.querySelector('.message-text');
+            if (sender === 'ai') {
+                // 核心功能：解析 Markdown 並安全地插入 HTML
+                const unsafeHtml = marked.parse(text);
+                textElement.innerHTML = DOMPurify.sanitize(unsafeHtml);
+            } else {
+                textElement.textContent = text;
+            }
+            
+            chatBox.appendChild(messageDiv);
+            scrollToBottom();
+        };
+        
+        const displayTypingIndicator = () => {
+            if (document.getElementById('typing-indicator')) return; // 防止重複
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.classList.add('message', 'ai');
+            typingDiv.innerHTML = `
+                <div class="avatar"><i class="ph-bold ph-robot"></i></div>
+                <div class="message-content">
+                    <div class="message-text">AI 正在思考中...</div>
+                </div>
+            `;
+            chatBox.appendChild(typingDiv);
+            scrollToBottom();
+        };
+
+        const removeTypingIndicator = () => {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        };
+
+        // --- 輔助同錯誤處理功能 ---
+        const scrollToBottom = () => chatBox.scrollTop = chatBox.scrollHeight;
+
+        const handleError = (error) => {
+            console.error("處理時發生錯誤:", error);
+            removeTypingIndicator();
+            displayMessage(`發生錯誤：${error.message}`, 'ai', true);
+        };
+        
+        const handleBlockedResponse = (data) => {
+            const reason = data.promptFeedback?.blockReason || "未知原因";
+            handleError(new Error(`AI 無法回應，可能因為內容安全設定。原因：${reason}`));
+        };
+
+        // 核心功能：複製到剪貼簿
+        window.copyToClipboard = (elementId) => {
+            const textElement = document.getElementById(elementId);
+            const copyBtn = textElement.closest('.message-content').querySelector('.copy-btn');
+            
+            navigator.clipboard.writeText(textElement.innerText).then(() => {
+                // 提供即時反饋
+                const icon = copyBtn.querySelector('i');
+                icon.classList.remove('ph-copy');
+                icon.classList.add('ph-fill', 'ph-check');
+                copyBtn.title = '已複製！';
+                
+                setTimeout(() => {
+                    icon.classList.remove('ph-fill', 'ph-check');
+                    icon.classList.add('ph-copy');
+                    copyBtn.title = '複製內容';
+                }, 2000);
+            }).catch(err => console.error('複製失敗: ', err));
+        };
+
+        // --- 事件監聽器 ---
         sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
     </script>
-
 </body>
 </html>
+
+
