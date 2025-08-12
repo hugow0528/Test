@@ -1,4 +1,4 @@
-v2<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -52,7 +52,13 @@ body {
         font-weight: 600;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between; /* Adjusted for settings button */
+    }
+
+    .chat-header .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
 
     .chat-header .avatar {
@@ -60,12 +66,25 @@ body {
         height: 40px;
         border-radius: 50%;
         background-color: #fff;
-        margin-right: 15px;
         display: flex;
         justify-content: center;
         align-items: center;
         font-weight: bold;
         color: var(--header-bg);
+    }
+    
+    #settings-btn {
+        background: none;
+        border: none;
+        color: var(--header-text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+    }
+    
+    #settings-btn:hover {
+        opacity: 1;
     }
 
     .chat-box {
@@ -170,6 +189,11 @@ body {
     .chat-input input:focus {
         border-color: var(--send-btn-bg);
     }
+    
+    .chat-input input:disabled {
+        background-color: #e9e9e9;
+        cursor: not-allowed;
+    }
 
     .chat-input button {
         background-color: var(--send-btn-bg);
@@ -189,6 +213,11 @@ body {
 
     .chat-input button:hover {
         background-color: #106a5f;
+    }
+    
+    .chat-input button:disabled {
+        background-color: #a0a0a0;
+        cursor: not-allowed;
     }
 
     /* Responsive Design */
@@ -217,14 +246,14 @@ body {
 
 <div class="chat-container">
     <div class="chat-header">
-        <div class="avatar">AI</div>
-        <span>Gemini 2.5 Flash Assistant</span>
+        <div class="header-content">
+            <div class="avatar">AI</div>
+            <span>Gemini 2.5 Flash Assistant</span>
+        </div>
+        <button id="settings-btn" title="Settings / Reset API Key">⚙️</button>
     </div>
     <div class="chat-box" id="chat-box">
-        <div class="message ai">
-            <div class="icon">AI</div>
-            <div class="text">Hello! I'm your AI Assistant powered by Gemini 2.5 Flash. How can I help you today?</div>
-        </div>
+        <!-- Initial AI message will be added by script -->
     </div>
     <div class="chat-input">
         <input type="text" id="user-input" placeholder="Type your message here...">
@@ -236,16 +265,59 @@ body {
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    
+    let apiKey;
 
-    // IMPORTANT: This is a dummy API key provided for frontend testing as requested.
-    // In a real-world application, NEVER expose your API key on the client-side.
-    // It should be handled securely on a backend server.
-    const apiKey = "AIzaSyDEKDzazfgVl3dcUJrhrtX7N9ce4OGhFq4";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const setupApiKey = () => {
+        apiKey = localStorage.getItem('geminiApiKey');
+        if (!apiKey) {
+            const userKey = prompt("Please enter your Google AI Gemini API Key. You can get one from Google AI Studio.");
+            if (userKey && userKey.trim() !== '') {
+                apiKey = userKey;
+                localStorage.setItem('geminiApiKey', userKey);
+                displayMessage("Hello! I'm your AI Assistant. Your API Key has been saved. How can I help you today?", 'ai');
+                enableChat();
+            } else {
+                displayMessage("An API Key is required to use this chat. Please click the settings icon (⚙️) in the top right to set your key.", 'ai');
+                disableChat();
+            }
+        } else {
+             displayMessage("Hello! I'm your AI Assistant, ready to help. Your API key is loaded from local storage.", 'ai');
+             enableChat();
+        }
+    };
+    
+    const resetApiKey = () => {
+        const newKey = prompt("Enter a new API Key or leave blank to clear the existing one.", apiKey || "");
+        if (newKey && newKey.trim() !== '') {
+            localStorage.setItem('geminiApiKey', newKey);
+            apiKey = newKey;
+            alert("API Key updated successfully!");
+            enableChat();
+        } else {
+            localStorage.removeItem('geminiApiKey');
+            apiKey = null;
+            alert("API Key has been cleared. Please set a new key to continue.");
+            disableChat();
+        }
+    };
+    
+    const disableChat = () => {
+        userInput.disabled = true;
+        sendBtn.disabled = true;
+        userInput.placeholder = "API Key needed...";
+    }
+    
+    const enableChat = () => {
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.placeholder = "Type your message here...";
+    }
 
     const sendMessage = async () => {
         const messageText = userInput.value.trim();
-        if (messageText === "") return;
+        if (messageText === "" || !apiKey) return;
 
         // Display user message
         displayMessage(messageText, 'user');
@@ -253,6 +325,8 @@ body {
 
         // Display typing indicator
         const typingIndicator = displayTypingIndicator();
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         try {
             const response = await fetch(apiUrl, {
@@ -273,16 +347,18 @@ body {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error.message || `API Error: ${response.status}`);
+                console.error("API Error Details:", errorData);
+                const errorMessage = errorData?.error?.message || `API Error: ${response.status}`;
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
-            const aiResponse = data.candidates.content.parts.text;
+            const aiResponse = data.candidates[0].content.parts[0].text;
             displayMessage(aiResponse, 'ai');
 
         } catch (error) {
             console.error("Error calling Gemini API:", error);
-            const errorMessage = "Sorry, I couldn't connect to the AI. This might be due to an invalid or expired API key. Please check the console for more details.";
+            const errorMessage = `Sorry, an error occurred. It might be an invalid API key. Please check the key in settings (⚙️) or view the console for details. Error: ${error.message}`;
             displayMessage(errorMessage, 'ai');
         }
     };
@@ -326,12 +402,18 @@ body {
         return typingElement;
     };
 
+    // --- Event Listeners ---
     sendBtn.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendMessage();
         }
     });
+    settingsBtn.addEventListener('click', resetApiKey);
+    
+    // --- Initial Setup ---
+    document.addEventListener('DOMContentLoaded', setupApiKey);
+
 </script>
 </body>
 </html>
