@@ -1,0 +1,15 @@
+{
+  "name": "ai-chat-app",
+  "version": "1.0.0",
+  "description": "AI Chat",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'Run `vercel dev` to start the development server.'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.14.1"
+  }
+}
