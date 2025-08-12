@@ -1,0 +1,17 @@
+# Dependencies
+/node_modules
+
+# Vercel deployment files
+/.vercel
+
+# Environment variables file
+# IMPORTANT: Never commit your API keys or secrets!
+.env
+.env.local
+.env.*.local
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
